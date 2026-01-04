@@ -1,45 +1,85 @@
-'use client'; // ユーザーの操作（入力）を扱うために必要
+'use client';
 
 import React, { useState } from 'react';
 import { Search, Bell, User, Upload, FileText, Sparkles, LayoutGrid, File } from 'lucide-react';
 
+// 型定義
+type SearchResult = {
+  id: number;
+  name: string;
+  summary: string;
+  tags: string[];
+  author: string;
+  lastUpdated: string;
+  format: string;
+};
+
 export default function Home() {
   // 画面の状態を管理する変数
-  const [searchQuery, setSearchQuery] = useState(''); // 検索ボックスの文字
-  const [isSearched, setIsSearched] = useState(false); // 検索ボタンを押したかどうか
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearched, setIsSearched] = useState(false);
+  
+  // 検索結果のリスト
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  
+  // ▼選択中のファイルを管理する状態（初期値はnull）
+  const [selectedFile, setSelectedFile] = useState<SearchResult | null>(null);
 
-  // 検索実行時の処理
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault(); // ページの再読み込みを防ぐ
-    if (searchQuery.trim()) {
-      setIsSearched(true); // 2ページ目（検索結果画面）に切り替え
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // AIの回答を表示するための状態
+  const [aiAnswer, setAiAnswer] = useState<string | null>(null);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setIsSearched(true);
+    setIsLoading(true);
+    setError(null);
+    setSelectedFile(null);
+    setAiAnswer(null); // 前の回答を消す
+
+    try {
+      const url = `http://localhost:8000/ask?q=${encodeURIComponent(searchQuery)}`;
+      const res = await fetch(url);
+      
+      if (!res.ok) {
+        throw new Error(`エラー: ${res.status}`);
+      }
+
+      const data = await res.json();
+      
+      // ▼ ここを修正：バックエンドの返却値に合わせてセット
+      // data.answer がAIの回答、data.contexts が関連ファイルリストです
+      setAiAnswer(data.answer);
+      
+      // contextsの中身をsearchResultsとして扱う
+      // 各コンテキストに id がない場合は、mapの中で付与します
+      const formattedResults = data.contexts.map((ctx: any, index: number) => ({
+        id: index,
+        name: ctx.file_name || "関連資料", // バックエンドのキー名に合わせて調整
+        summary: ctx.text,
+        tags: [ctx.metadata?.category || "AI分析"],
+        author: "システム",
+        lastUpdated: "2026/01/04",
+        format: "PDF"
+      }));
+
+      setSearchResults(formattedResults);
+      if (formattedResults.length > 0) {
+        setSelectedFile(formattedResults[0]);
+      }
+
+    } catch (error) {
+      console.error("検索エラー:", error);
+      setError("検索中にエラーが発生しました。");
+      setSearchResults([]);
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  // 検索結果のダミーデータ（2ページ目で使用）
-  const searchResults = [
-    { 
-      id: 1, 
-      name: 'A社_業務委託契約書_2025.pdf', 
-      summary: '2025年度の基本契約に関する条項。機密保持契約（NDA）を含む。',
-      tags: ['契約書', 'A社案件', '2025年度'],
-      author: '田中 太郎', lastUpdated: '2025/03/15', format: 'PDF'
-    },
-    { 
-      id: 2, 
-      name: '第1四半期_売上予測レポート.xlsx', 
-      summary: '全部署のQ1売上見込み集計。前年比120%達成の見込み。',
-      tags: ['A社案件', '2025年度'],
-      author: '鈴木 一郎', lastUpdated: '2025/03/14', format: 'Excel'
-    },
-    { 
-      id: 3, 
-      name: '新規プロジェクト企画案_v2.docx', 
-      summary: 'AI導入による業務効率化プロジェクトの予算とスケジュール案。',
-      tags: ['2025年度', '社内企画'],
-      author: '佐藤 花子', lastUpdated: '2025/03/10', format: 'Word'
-    },
-  ];
 
   // --- 共通パーツ：ヘッダー ---
   const Header = () => (
@@ -62,14 +102,12 @@ export default function Home() {
     </header>
   );
 
-  // --- ページ1：検索前の画面（シンプル） ---
+  // --- ページ1：検索前の画面 ---
   if (!isSearched) {
     return (
       <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
         <Header />
         <main className="max-w-5xl mx-auto px-6 py-20 flex flex-col items-center gap-16">
-          
-          {/* 保存エリア */}
           <section className="w-full max-w-3xl">
             <div className="border-2 border-dashed border-blue-500 bg-blue-50/20 rounded-xl p-10 flex flex-col items-center justify-center gap-6 text-center h-56">
               <p className="font-bold text-slate-700">ファイル保存</p>
@@ -78,10 +116,8 @@ export default function Home() {
               </button>
             </div>
           </section>
-
-          {/* 検索エリア */}
           <section className="w-full max-w-4xl flex flex-col items-center gap-3">
-            <p className="text-slate-500 text-sm">自然な言葉で質問してください。AIが最適なファイルを見つけます。</p>
+            <p className="text-slate-500 text-sm">ファイルを探す（検索ボックスに質問を入力してください）</p>
             <form onSubmit={handleSearch} className="w-full">
               <div className="relative w-full group">
                 <div className="flex items-center bg-gray-100 rounded-full px-6 h-[64px] border border-transparent focus-within:bg-white focus-within:border-blue-300 focus-within:shadow-lg transition-all">
@@ -103,7 +139,7 @@ export default function Home() {
     );
   }
 
-  // --- ページ2：検索結果の画面（3カラムレイアウト） ---
+  // --- ページ2：検索結果の画面 ---
   return (
     <div className="min-h-screen bg-white font-sans text-slate-800 flex flex-col">
       <Header />
@@ -113,7 +149,6 @@ export default function Home() {
         {/* 左サイドバー：フィルター */}
         <aside className="w-64 border-r border-gray-200 p-6 overflow-y-auto bg-white hidden md:block">
           <h2 className="font-bold text-lg mb-6">フィルター</h2>
-          
           <div className="mb-8">
             <h3 className="flex items-center gap-2 font-bold text-sm text-slate-700 mb-3">
               <Sparkles className="w-4 h-4 text-blue-500" /> AI生成タグ
@@ -127,7 +162,6 @@ export default function Home() {
               ))}
             </div>
           </div>
-
           <div>
             <h3 className="flex items-center gap-2 font-bold text-sm text-slate-700 mb-3">
               <FileText className="w-4 h-4 text-blue-500" /> ファイル種類
@@ -173,67 +207,126 @@ export default function Home() {
               </div>
             </div>
 
+            {/* AIの回答を表示するエリア */}
+            {aiAnswer && (
+              <div className="bg-blue-50 border border-blue-200 p-6 rounded-xl mb-8">
+                <h3 className="flex items-center gap-2 font-bold text-blue-800 mb-3">
+                  <Sparkles className="w-5 h-5" /> AIの回答
+                </h3>
+                <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{aiAnswer}</p>
+              </div>
+            )}
+
+
             {/* 下部：検索結果リスト */}
             <div>
-              <h2 className="text-lg font-bold mb-4">検索結果 : {searchResults.length} 件</h2>
-              <div className="space-y-4">
-                {searchResults.map((file) => (
-                  <div key={file.id} className="bg-gray-100/50 p-5 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group">
-                    <div className="flex items-start gap-4">
-                      {/* ファイルの内容 */}
-                      <div className="flex-1 space-y-3">
-                        <h3 className="font-bold text-lg text-slate-800 group-hover:text-blue-700">{file.name}</h3>
-                        <div className="bg-gray-200/50 p-3 rounded text-sm text-slate-600 border border-gray-200">
-                          {file.summary}
-                        </div>
-                        
-                        {/* タグエリア */}
-                        <div className="flex gap-2 flex-wrap">
-                          {file.tags.map((tag) => (
-                            <span key={tag} className="bg-blue-500 text-white text-xs px-3 py-1 rounded-full font-medium">
-                              タグ（{tag}）
-                            </span>
-                          ))}
-                        </div>
+              <h2 className="text-lg font-bold mb-4">
+                {isLoading ? '検索中...' : `検索結果 : ${searchResults.length} 件`}
+              </h2>
 
-                        {/* メタデータテーブル風 */}
-                        <div className="grid grid-cols-3 gap-2 bg-gray-200 p-2 rounded text-xs text-slate-600 mt-2">
-                          <div className="border-r border-gray-300 px-2">作成者: {file.author}</div>
-                          <div className="border-r border-gray-300 px-2">最終更新: {file.lastUpdated}</div>
-                          <div className="px-2">形式: {file.format}</div>
+              {error && (
+                <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-4 text-sm">
+                  {error}
+                </div>
+              )}
+
+              {isLoading ? (
+                <div className="flex justify-center py-20">
+                  <div className="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {!error && searchResults.length === 0 && (
+                    <p className="text-slate-500 py-4">該当するファイルが見つかりませんでした。</p>
+                  )}
+
+                  {searchResults.map((file) => (
+                    // ▼【追加 3】onClickで選択状態を更新。選択中のものは青い枠線をつける
+                    <div 
+                      key={file.id} 
+                      onClick={() => setSelectedFile(file)}
+                      className={`
+                        p-5 rounded-lg border transition-all cursor-pointer group
+                        ${selectedFile?.id === file.id 
+                          ? 'bg-blue-50 border-blue-500 shadow-md ring-1 ring-blue-500' // 選択中のスタイル
+                          : 'bg-gray-100/50 border-gray-200 hover:border-blue-300 hover:shadow-md' // 未選択のスタイル
+                        }
+                      `}
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="flex-1 space-y-3">
+                          <h3 className={`font-bold text-lg group-hover:text-blue-700 ${selectedFile?.id === file.id ? 'text-blue-800' : 'text-slate-800'}`}>
+                            {file.name}
+                          </h3>
+                          <div className="bg-white/50 p-3 rounded text-sm text-slate-600 border border-gray-200">
+                            {file.summary}
+                          </div>
+                          
+                          <div className="flex gap-2 flex-wrap">
+                            {file.tags && file.tags.map((tag) => (
+                              <span key={tag} className="bg-blue-500 text-white text-xs px-3 py-1 rounded-full font-medium">
+                                タグ（{tag}）
+                              </span>
+                            ))}
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-2 bg-gray-200 p-2 rounded text-xs text-slate-600 mt-2">
+                            <div className="border-r border-gray-300 px-2">作成者: {file.author}</div>
+                            <div className="border-r border-gray-300 px-2">最終更新: {file.lastUpdated}</div>
+                            <div className="px-2">形式: {file.format}</div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </main>
 
         {/* 右サイドバー：プレビュー */}
-        <aside className="w-72 bg-white p-6 hidden lg:block">
+        {/* 選択されたファイル(selectedFile)の内容を表示する */}
+        <aside className="w-72 bg-white p-6 hidden lg:block border-l border-gray-200">
           <h2 className="font-bold text-lg mb-6">プレビュー</h2>
           
-          <div className="space-y-6">
-            <div className="space-y-1">
-              <p className="text-xs text-slate-500 font-bold">作成者</p>
-              <p className="text-sm">田中 太郎</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs text-slate-500 font-bold">最終更新</p>
-              <p className="text-sm">2025年3月15日</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs text-slate-500 font-bold">ファイル形式</p>
-              <p className="text-sm">PDF</p>
-            </div>
+          {selectedFile ? (
+            <div className="space-y-6 fade-in">
+               {/* ファイル名 */}
+              <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 mb-4">
+                <p className="font-bold text-blue-900 text-sm break-words">{selectedFile.name}</p>
+              </div>
 
-            {/* プレビューの四角いグレーエリア */}
-            <div className="w-full aspect-[3/4] bg-gray-200 rounded-lg flex items-center justify-center text-gray-400">
-               {/* 実際のプレビュー画像がここに入ります */}
+              <div className="space-y-1">
+                <p className="text-xs text-slate-500 font-bold">作成者</p>
+                <p className="text-sm">{selectedFile.author}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-slate-500 font-bold">最終更新</p>
+                <p className="text-sm">{selectedFile.lastUpdated}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-slate-500 font-bold">ファイル形式</p>
+                <p className="text-sm">{selectedFile.format}</p>
+              </div>
+
+              {/* プレビューエリア（ダミー画像のままですが、用途に合わせて変更可能） */}
+              <div className="w-full aspect-[3/4] bg-gray-100 rounded-lg flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-300 gap-2">
+                 <File className="w-10 h-10 text-gray-300" />
+                 <span className="text-xs">プレビュー画像</span>
+              </div>
+
+              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md text-sm font-bold transition-colors">
+                ファイルを開く
+              </button>
             </div>
-          </div>
+          ) : (
+            // ファイルが選択されていない時
+            <div className="flex flex-col items-center justify-center h-64 text-slate-400 gap-2">
+              <FileText className="w-10 h-10" />
+              <p className="text-sm">リストからファイルを選択</p>
+            </div>
+          )}
         </aside>
 
       </div>
