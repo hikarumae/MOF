@@ -42,7 +42,12 @@ export default function Home() {
     setAiAnswer(null); // 前の回答を消す
 
     try {
-      const url = `http://localhost:8000/ask?q=${encodeURIComponent(searchQuery)}`;
+      // --- ★ここから環境変数対応版 ---
+      // NEXT_PUBLIC_API_URL が設定されていればそれを使い、なければ localhost を使う
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const url = `${API_BASE_URL}/ask?q=${encodeURIComponent(searchQuery)}`;
+      // --- ★ここまで ---
+
       const res = await fetch(url);
       
       if (!res.ok) {
@@ -51,12 +56,12 @@ export default function Home() {
 
       const data = await res.json();
       
-      // ▼ ここを修正：バックエンドの返却値に合わせてセット
-      // data.answer がAIの回答、data.contexts が関連ファイルリストです
+      // ▼バックエンドの返却値に合わせてセット
+      // data.answer がAIの回答、data.contexts が関連ファイルリスト
       setAiAnswer(data.answer);
       
       // contextsの中身をsearchResultsとして扱う
-      // 各コンテキストに id がない場合は、mapの中で付与します
+      // 各コンテキストに id がない場合は、mapの中で付与
       const formattedResults = data.contexts.map((ctx: any, index: number) => ({
         id: index,
         name: ctx.file_name || "関連資料", // バックエンドのキー名に合わせて調整
