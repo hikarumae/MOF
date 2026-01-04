@@ -59,5 +59,6 @@ jobs:
         with:
           app-name: 'tech0-gen-11-step3-2-node-55'
           slot-name: 'Production'
-          package: ./release # ルート(.)ではなく、展開したフォルダを指定
+          package: .
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_DA2DC9F9F5AD4D79A7470E2982B67D92 }}
+          clean: true # これを追加：既存のソースコードを削除してからデプロイします
