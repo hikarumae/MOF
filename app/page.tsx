@@ -152,6 +152,7 @@ export default function Home() {
       <div className="flex flex-1 overflow-hidden">
         
         {/* 左サイドバー：フィルター */}
+        {/* ここからコメントアウト
         <aside className="w-64 border-r border-gray-200 p-6 overflow-y-auto bg-white hidden md:block">
           <h2 className="font-bold text-lg mb-6">フィルター</h2>
           <div className="mb-8">
@@ -181,6 +182,7 @@ export default function Home() {
             </div>
           </div>
         </aside>
+        ここまでコメントアウト */}
 
         {/* 中央カラム：検索と結果 */}
         <main className="flex-1 overflow-y-auto bg-white border-r border-gray-200">
