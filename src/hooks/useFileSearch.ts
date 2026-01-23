@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import type { FormEvent } from 'react';
 import { SearchResult } from '../types/file';
 import { API_BASE_URL, SYSTEM_AUTHOR_NAME, DEFAULT_FILE_FORMAT, LAST_UPDATED_PLACEHOLDER } from '../constants/config';
 
-const TIMEOUT_MS = 10_000; // タイムアウト 10秒（好みで調整）
+const TIMEOUT_MS = 10_000;
 
 export const useFileSearch = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -15,7 +16,7 @@ export const useFileSearch = () => {
   const [error, setError] = useState<string | null>(null);
   const [aiAnswer, setAiAnswer] = useState<string | null>(null);
 
-  const handleSearch = async (e: React.FormEvent) => {
+  const handleSearch = async (e: FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
@@ -25,52 +26,62 @@ export const useFileSearch = () => {
     setSelectedFile(null);
     setAiAnswer(null);
 
-    // タイムアウト用の AbortController を作成
     const controller = new AbortController();
-    const timeoutId = window.setTimeout(
-      () => controller.abort(),
-      TIMEOUT_MS
-    );
+    const timeoutId = window.setTimeout(() => controller.abort(), TIMEOUT_MS);
 
     try {
       const url = `${API_BASE_URL}/ask?q=${encodeURIComponent(searchQuery)}`;
-
       const res = await fetch(url, { signal: controller.signal });
       if (!res.ok) throw new Error(`Fetch エラー: ${res.status}`);
 
       const data = await res.json();
+      const sources = Array.isArray(data.sources) ? data.sources : [];
 
-      setAiAnswer(data.answer ?? null); // 26.1.21追加 AIの回答をセット
-      
-      /**
-       * ★2026.1.21 修正
-       * - id に index を使わない
-       * - backend が返す documentName を安定IDとして使用
-       */
-      const formattedResults = data.contexts.map((ctx: any, index: number) => ({
-        id: String(ctx.documentName),
-        name: ctx.file_name || "関連資料",
-        summary: ctx.text,
-        tags: [ctx.metadata?.category || "AI分析"],
-        author: SYSTEM_AUTHOR_NAME,   // ★定数を使用
-        lastUpdated: LAST_UPDATED_PLACEHOLDER, // ★定数を使用
-        format: DEFAULT_FILE_FORMAT   // ★定数を使用
-      }));
+      const formattedResults: SearchResult[] = sources.map((s: any) => {
+        const fileName = s.file_name ?? "資料名";
+        const chunkId = Number.isFinite(s.chunk_id) ? s.chunk_id : 0;
+        const category = s.category ?? "unknown";
+
+        return {
+          id: `${fileName}#${chunkId}`,
+          name: fileName,
+          summary: s.text ?? "",
+          category,
+          uri: s.uri ?? "",
+          page: (typeof s.page === "number" ? s.page : null),
+          chunkId,
+          tags: [category],
+          author: SYSTEM_AUTHOR_NAME,
+          lastUpdated: LAST_UPDATED_PLACEHOLDER,
+          format: DEFAULT_FILE_FORMAT,
+        };
+      });
 
       setSearchResults(formattedResults);
-      if (formattedResults.length > 0) {
-        setSelectedFile(formattedResults[0]);
-      }
-    } catch (error) {
-      console.error("検索エラー:", error);
-      setError("検索中にエラーが発生しました。");
+      setSelectedFile(formattedResults.length > 0 ? formattedResults[0] : null);
+
+      const answer =
+        typeof data.answer === "string" && data.answer.trim() ? data.answer : null;
+      setAiAnswer(answer);
+
+    } catch (err: any) {
+      console.error("検索エラー:", err);
+
+      // 追加：画面にも詳細を出す（切り分け用）
+      const msg =
+        err?.name === "AbortError" ? "タイムアウトしました" :
+        err?.message ? `エラー: ${err.message}` :
+        `不明なエラー: ${String(err)}`;
+      setError(msg);
       setSearchResults([]);
+      setSelectedFile(null);
+
     } finally {
+      window.clearTimeout(timeoutId);
       setIsLoading(false);
     }
   };
 
-  // page.tsx で使いたい変数や関数をすべて返す
   return {
     searchQuery,
     setSearchQuery,

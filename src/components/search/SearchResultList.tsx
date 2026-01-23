@@ -6,7 +6,7 @@ import { ResultCard } from './ResultCard';
 
 interface SearchResultListProps {
   results: SearchResult[];
-  selectedFileId: number | null;
+  selectedFileId: string | null;
   onFileSelect: (file: SearchResult) => void;
 }
 
