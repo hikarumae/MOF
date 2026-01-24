@@ -3,8 +3,13 @@
  */
 
 // APIのベースURL
-// 環境変数 NEXT_PUBLIC_API_URL があればそれを使用し、なければローカル環境をデフォルトにする
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// 注) ビルド時に定数が固定されてしまうため注意。
+
+// 以下コメントは無視して。
+// ★26.01.24 修正 maccha
+// 元の渡し方だとビルドで固定されてしまうため、
+// export const BACKEND_API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // アプリケーション名
 export const APP_NAME = "司書AIアプリ MOF";
