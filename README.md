@@ -1,5 +1,9 @@
 # MOF_Frontend README
 
+# 使い方
+npm run dev
+(.envなどは特段不要のはず)
+
 # API仕様
 ## GET /ask
 ### 送信データ形式
