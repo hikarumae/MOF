@@ -34,6 +34,7 @@ export const useFileSearch = () => {
     try {
       const url = `${BACKEND_API_URL}/ask?q=${encodeURIComponent(searchQuery)}`;
       console.log("BACKEND_API_URL =", BACKEND_API_URL);
+      console.log("NEXT_PUBLIC_API_URL =", process.env.NEXT_PUBLIC_API_URL);
       console.log("fetch url =", url);
       const res = await fetch(url, { signal: controller.signal });
       if (!res.ok) throw new Error(`Fetch エラー: ${res.status}`);

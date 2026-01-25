@@ -6,7 +6,7 @@ name: Build and deploy Node.js app to Azure Web App - tech0-gen-11-step3-2-node-
 on:
   push:
     branches:
-      - main
+      - maccha_API
   workflow_dispatch:
 
 jobs:
@@ -46,4 +46,4 @@ jobs:
           app-name: 'tech0-gen-11-step3-2-node-55'
           slot-name: 'Production'
           package: .
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_7CDB4DD7F6A9484CB170695C6FF5E9AD }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_EB6CDCDB772A4D7F96405BCF427CDF31 }}
