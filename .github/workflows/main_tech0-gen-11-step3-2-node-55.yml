@@ -58,14 +58,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
-          path: ./release_files # 明示的な展開先を指定
+# エラー原因かもなので消してみます。 ->  path: ./release_files # 明示的な展開先を指定
 
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'tech0-gen-11-step3-2-node-55'
-          package: ./release_files
+#          package: ./release_files
+          package: .
           clean: true
           # publish-profile はそのまま
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_DA2DC9F9F5AD4D79A7470E2982B67D92 }}
