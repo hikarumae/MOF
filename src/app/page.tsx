@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Search, Bell, User, Upload, FileText, Sparkles, LayoutGrid, File } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { SearchResult } from '../types/file';
@@ -26,20 +26,77 @@ export default function Home() {
     handleSearch,
   } = useFileSearch();
 
+// -----------------------------------------------------------------
+  // ▼▼ ここから追加（AzureアップロードとD&D機能） ▼▼（たも追加）
+  // -----------------------------------------------------------------
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 1. ファイルをサーバーへ送信する共通関数
+  const uploadToAzure = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      if (res.ok) alert('Azureへのアップロードが完了しました！');
+    } catch (err) {
+      alert('アップロードに失敗しました');
+    }
+  };
+
+  // 2. クリック操作用イベント
+  const handleSaveClick = () => fileInputRef.current?.click();
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) uploadToAzure(e.target.files[0]);
+  };
+
+  // 3. ドラッグ＆ドロップ用イベント
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+  const handleDragLeave = () => setIsDragging(false);
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files[0]) uploadToAzure(e.dataTransfer.files[0]);
+  };
+  // -----------------------------------------------------------------
+  // ▲▲ 追加ここまで ▲▲(たも)
+  // -----------------------------------------------------------------
+
+
   // --- ページ1：検索前の画面 ---
   if (!isSearched) {
     return (
       <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
         <Header onLogoClick={() => setIsSearched(false)} />
         <main className="max-w-5xl mx-auto px-6 py-20 flex flex-col items-center gap-16">
+          
           <section className="w-full max-w-3xl">
-            <div className="border-2 border-dashed border-blue-500 bg-blue-50/20 rounded-xl p-10 flex flex-col items-center justify-center gap-6 text-center h-56">
-              <p className="font-bold text-slate-700">ファイル保存</p>
-              <button className="bg-slate-500 hover:bg-slate-600 text-white px-10 py-3 rounded-md shadow-md font-medium transition-colors w-64">
-                ファイルを保存する
-              </button>
+            <div onClick={handleSaveClick}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`cursor-pointer border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center gap-6 text-center h-56 transition-all ${isDragging 
+              ? "border-blue-700 bg-blue-100" // ドラッグ中の強調スタイル
+              : "border-blue-500 bg-blue-50/20 hover:bg-blue-50/40" // 通常時のスタイル
+              }`}>
+                
+              {/* ここが重要：画面には見えないが、ファイル選択ダイアログを開くためのinput */}
+              <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                <p className="font-bold text-slate-700">
+                  {isDragging ? "ここにドロップしてアップロード" : "ファイル保存"}
+                </p>
+
+                <button className="bg-slate-500 hover:bg-slate-600 text-white px-10 py-3 rounded-md shadow-md font-medium transition-colors w-64 pointer-events-none">ファイルを保存する</button>
             </div>
           </section>
+
+
           <section className="w-full max-w-4xl flex flex-col items-center gap-3">
             <p className="text-slate-500 text-sm">ファイルを探す（検索ボックスに質問を入力してください）</p>
             
@@ -56,6 +113,7 @@ export default function Home() {
     );
   }
 
+
   // --- ページ2：検索結果の画面 ---
   return (
     <div className="min-h-screen bg-white font-sans text-slate-800 flex flex-col">
@@ -71,10 +129,21 @@ export default function Home() {
             {/* 上部：保存と検索 */}
             <div className="space-y-6">
               <div>
-                <h3 className="font-medium text-slate-800 mb-2">ファイルを保存する</h3>
-                <button className="w-full bg-slate-500 hover:bg-slate-600 text-white py-3 rounded-md shadow-sm font-medium transition-colors">
-                  保存するファイルを選択する
-                </button>
+              <section className="w-full max-w-3xl">
+                <div onClick={handleSaveClick} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} className={`cursor-pointer border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center gap-6 text-center h-56 transition-all ${isDragging 
+              ? "border-blue-700 bg-blue-100" // ドラッグ中の強調スタイル
+              : "border-blue-500 bg-blue-50/20 hover:bg-blue-50/40" // 通常時のスタイル
+              }`}>
+                
+              {/* ここが重要：画面には見えないが、ファイル選択ダイアログを開くためのinput */}
+              <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                <p className="font-bold text-slate-700">
+                  {isDragging ? "ここにドロップしてアップロード" : "ファイル保存"}
+                </p>
+
+                <button className="bg-slate-500 hover:bg-slate-600 text-white px-10 py-3 rounded-md shadow-md font-medium transition-colors w-64 pointer-events-none">ファイルを保存する</button>
+            </div>
+              </section>
               </div>
 
               <div>
