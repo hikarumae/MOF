@@ -1,3 +1,6 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
 name: Build and deploy Node.js app to Azure Web App - tech0-gen-11-step3-2-node-55
 
 on:
@@ -9,61 +12,38 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read #This is required for actions/checkout
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
-          node-version: '20.x'
-
-      - name: npm install and build
-        run: |
-          npm install
-          npm run build
-        env:
-          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
-
-      - name: Prepare standalone artifact
-        run: |
-          # 1. 作業用フォルダを初期化
-          rm -rf ./deploy_package
-          mkdir -p ./deploy_package
-          
-          # 2. standalone フォルダの中身（server.js等）をコピー
-          cp -r .next/standalone/. ./deploy_package/
-          
-          # 3. 【重要】隠しフォルダ .next を、名前を指定して直接コピー
-          cp -r .next/standalone/.next ./deploy_package/
-          
-          # 4. 静的ファイルとpublicをコピー
-          mkdir -p ./deploy_package/.next/static
-          cp -r .next/static/. ./deploy_package/.next/static/
-          cp -r public ./deploy_package/public
+          node-version: '22.x'
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          # フォルダ名だけでなく「中身（ドットファイル含む）」を明示
-          path: ./deploy_package/
-          include-hidden-files: true # これを追加（v4で有効なオプション）      
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
+    
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: node-app
-          path: ./release_files # 明示的な展開先を指定
-
+      
       - name: 'Deploy to Azure Web App'
+        id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'tech0-gen-11-step3-2-node-55'
-          package: ./release_files
-          clean: true
-          # publish-profile はそのまま
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_DA2DC9F9F5AD4D79A7470E2982B67D92 }}
+          slot-name: 'Production'
+          package: .
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_8298D1CB119848B4AD1F50954295E4E9 }}
