@@ -55,7 +55,7 @@ npm run dev
 }
 
 
-
+```
 # ファイル構成
 src/
 ├── app/
