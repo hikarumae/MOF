@@ -7,7 +7,7 @@ import type { FormEvent } from 'react';
 import { SearchResult } from '../types/file';
 import { BACKEND_API_URL, SYSTEM_AUTHOR_NAME, DEFAULT_FILE_FORMAT, LAST_UPDATED_PLACEHOLDER } from '../constants/config';
 
-const TIMEOUT_MS = 10_000;
+const TIMEOUT_MS = 30_000;
 
 export const useFileSearch = () => {
   const [searchQuery, setSearchQuery] = useState('');
