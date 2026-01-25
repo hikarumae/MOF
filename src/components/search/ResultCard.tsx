@@ -7,9 +7,10 @@ interface ResultCardProps {
   file: SearchResult;
   isSelected: boolean;
   onClick: () => void;
+  onOpen?: () => void;
 }
 
-export const ResultCard = ({ file, isSelected, onClick }: ResultCardProps) => {
+export const ResultCard = ({ file, isSelected, onClick, onOpen }: ResultCardProps) => {
   return (
     <div 
       onClick={onClick}
@@ -23,8 +24,33 @@ export const ResultCard = ({ file, isSelected, onClick }: ResultCardProps) => {
     >
       <div className="flex items-start gap-4">
         <div className="flex-1 space-y-3">
+          {/* 前回のファイル名を表示させるだけのコード
           <h3 className={`font-bold text-lg group-hover:text-blue-700 ${isSelected ? 'text-blue-800' : 'text-slate-800'}`}>
             {file.name}
+          </h3> */}
+          <h3
+            className={`font-bold text-lg group-hover:text-blue-700 ${
+              isSelected ? 'text-blue-800' : 'text-slate-800'
+            } ${onOpen ? 'hover:underline' : ''}`} // 開ける時だけそれっぽく
+            onClick={(e) => {
+              // カード全体のonClick(選択)を止める
+              e.stopPropagation();
+
+              // onOpenが渡されていれば開く
+              onOpen?.();
+            }}
+            role={onOpen ? 'button' : undefined}
+            tabIndex={onOpen ? 0 : undefined}
+            onKeyDown={(e) => {
+              // キーボード操作対応（任意だけど軽く入れとくと親切）
+              if (!onOpen) return;
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onOpen();
+              }
+            }}
+          >
+            {'file_name' in file ? (file as any).file_name : (file as any).name}
           </h3>
           <div className="bg-white/50 p-3 rounded text-sm text-slate-600 border border-gray-200">
             {file.summary}

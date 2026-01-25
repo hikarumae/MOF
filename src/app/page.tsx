@@ -200,10 +200,15 @@ export default function Home() {
                   )}
 
                   <SearchResultList 
-                  results={searchResults} // フックから返ってきた結果
-                  selectedFileId={selectedFile?.id ?? null} // 選択中のID
-                  onFileSelect={setSelectedFile} // 選択関数
-/>
+                    results={searchResults} // フックから返ってきた結果
+                    selectedFileId={selectedFile?.id ?? null} // 選択中のID
+                    onFileSelect={setSelectedFile} // 選択関数
+                    onFileOpen={(file) => {
+                      console.log("open uri:", file.uri);
+                      if (!file.uri) return;
+                      window.open(file.uri, "_blank", "noopener,noreferrer");
+                    }}
+                  />
                   
                 </div>
               )}
