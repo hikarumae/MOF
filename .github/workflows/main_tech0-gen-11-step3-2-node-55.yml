@@ -15,8 +15,32 @@ jobs:
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
-          node-version: '22.x'
-          cache: 'npm' # キャッシュを有効にして高速化
+          node-version: '20.x'
+
+      - name: npm install and build
+        run: |
+          npm install
+          npm run build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+
+      - name: Prepare standalone artifact
+        run: |
+          # 1. 作業用フォルダを初期化
+          rm -rf ./deploy_package
+          mkdir -p ./deploy_package
+          
+          # 2. standalone フォルダの中身（server.js等）をコピー
+          cp -r .next/standalone/. ./deploy_package/
+          
+          # 3. 【重要】隠しフォルダ .next を、名前を指定して直接コピー
+          cp -r .next/standalone/.next ./deploy_package/
+          
+          # 4. 静的ファイルとpublicをコピー
+          mkdir -p ./deploy_package/.next/static
+          cp -r .next/static/. ./deploy_package/.next/static/
+          cp -r public ./deploy_package/public
+
 
       - name: Install dependencies and Build
         # ここでライブラリをインストールし、Next.jsをビルドします
@@ -33,8 +57,9 @@ jobs:
           name: node-app
           # 全体ではなく、ビルドに必要な最小限をアップロードするのが理想ですが
           # まずは確実に動かすためにカレントディレクトリを対象にします
-          path: .
-
+          # フォルダ名だけでなく「中身（ドットファイル含む）」を明示
+          path: ./deploy_package/
+          include-hidden-files: true # これを追加（v4で有効なオプション）      
   deploy:
     runs-on: ubuntu-latest
     needs: build
@@ -49,6 +74,7 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'tech0-gen-11-step3-2-node-55'
-          slot-name: 'Production'
-          package: .
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_7CDB4DD7F6A9484CB170695C6FF5E9AD }}
+          package: ./release_files
+          clean: true
+          # publish-profile はそのまま
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_DA2DC9F9F5AD4D79A7470E2982B67D92 }}
