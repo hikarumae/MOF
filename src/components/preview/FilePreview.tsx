@@ -11,7 +11,7 @@ interface FilePreviewProps {
 // ファイルプレビューコンポーネント
 export const FilePreview = ({ selectedFile }: FilePreviewProps) => {
   return (
-    <aside className="w-72 bg-white p-6 block border-l border-gray-200">
+    <aside className="hidden lg:block w-72 bg-white p-6 border-l border-gray-200">
       <h2 className="font-bold text-lg mb-6">プレビュー</h2>
       
       {selectedFile ? (

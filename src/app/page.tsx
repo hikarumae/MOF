@@ -216,7 +216,7 @@ export default function Home() {
           </div>
         </main>
 
-        {/* 右カラム：ファイルプレビュー */}
+        {/* 右カラム：ファイルプレビュー【非表示中】　*/}
         <FilePreview selectedFile={selectedFile} />
 
       </div>
