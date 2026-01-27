@@ -1,8 +1,6 @@
-// page.tsx
-
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Search, Bell, User, Upload, FileText, Sparkles, LayoutGrid, File } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { SearchResult } from '../types/file';
@@ -70,66 +68,6 @@ export default function Home() {
   // ▲▲ 追加ここまで ▲▲(たも)
   // -----------------------------------------------------------------
 
-  // -----------------------------------------------------------------
-  // 26-01-28追加 maccha 要約表示用の型を追加 
-  // -----------------------------------------------------------------
-  type SummaryState =
-    | { status: 'idle' }
-    | { status: 'loading' }
-    | { status: 'done'; text: string }
-    | { status: 'error'; error: string };
-
-  type SummariesById = Record<string, SummaryState>;
-
-  const [summariesById, setSummariesById] = useState<SummariesById>({});
-
-  const fetchSummaryIfNeeded = async (docId: string) => {
-    const cur = summariesById[docId];
-    if (cur?.status === 'loading' || cur?.status === 'done') return; // 二重取得しない
-
-    setSummariesById((prev) => ({ ...prev, [docId]: { status: 'loading' } }));
-
-    try {
-      const res = await fetch(`/api/summary?doc_id=${encodeURIComponent(docId)}`, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-      });
-
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '');
-        throw new Error(`summary api error: ${res.status} ${txt}`);
-      }
-
-      // 例: { summary: "....", status: "done" } みたいなのを想定
-      const data = await res.json();
-
-      // APIが「生成中」を返す設計ならここで分岐してもOK
-      const summaryText: string = data.summary ?? '';
-
-      if (!summaryText) {
-        // 返ってこない場合は「未生成」扱いにする（お好みで）
-        setSummariesById((prev) => ({ ...prev, [docId]: { status: 'idle' } }));
-        return;
-      }
-
-      setSummariesById((prev) => ({ ...prev, [docId]: { status: 'done', text: summaryText } }));
-    } catch (e: any) {
-      setSummariesById((prev) => ({
-        ...prev,
-        [docId]: { status: 'error', error: e?.message ?? 'unknown error' },
-      }));
-    }
-  };
-
-  useEffect(() => {
-    if (!selectedFile?.id) return;
-    fetchSummaryIfNeeded(selectedFile.id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFile?.id]);
-
-  // -----------------------------------------------------------------
-  // ▲▲ 追加ここまで ▲▲(Maccha)
-  // -----------------------------------------------------------------
 
   // --- ページ1：検索前の画面 ---
   if (!isSearched) {
@@ -263,7 +201,6 @@ export default function Home() {
                       if (!file.uri) return;
                       window.open(file.uri, "_blank", "noopener,noreferrer");
                     }}
-                    summariesById={summariesById} // 26-01-28追加
                   />
                   
                 </div>
