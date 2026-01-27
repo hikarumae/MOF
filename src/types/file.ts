@@ -24,7 +24,13 @@ export type SearchResult = {
 
   // 既存UIが参照しているので残す（固定値）
   tags: string[];
-  author: string;
-  lastUpdated: string;
   format: string;
+  
+  // 旧 author: 文書カテゴリとして使用
+  documentCategory: string;
+
+  // 旧 lastUpdated: 文書内の日付として使用
+  documentDate: string;
 };
+  
+

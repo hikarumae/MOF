@@ -21,16 +21,19 @@ export const FilePreview = ({ selectedFile }: FilePreviewProps) => {
           </div>
 
           <div className="space-y-1">
-            <p className="text-xs text-slate-500 font-bold">作成者</p>
-            <p className="text-sm">{selectedFile.author}</p>
+            <p className="text-xs text-slate-500 font-bold">文書カテゴリ</p>
+            <p className="text-sm">{selectedFile.documentCategory}</p>
           </div>
+
           <div className="space-y-1">
-            <p className="text-xs text-slate-500 font-bold">最終更新</p>
-            <p className="text-sm">{selectedFile.lastUpdated}</p>
+            <p className="text-xs text-slate-500 font-bold">文書日付</p>
+            <p className="text-sm">{selectedFile.documentDate}</p>
           </div>
+
+          {/* ▼▼ ファイル形式（拡張子などを表示） ▼▼ */}
           <div className="space-y-1">
             <p className="text-xs text-slate-500 font-bold">ファイル形式</p>
-            <p className="text-sm">{selectedFile.format}</p>
+            <p className="text-sm uppercase">{selectedFile.format}</p>
           </div>
 
           <div className="w-full aspect-[3/4] bg-gray-100 rounded-lg flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-300 gap-2">
