@@ -63,8 +63,10 @@ export const useFileSearch = () => {
           tags: [category],
           documentCategory: DEFAULT_DOCUMENT_CATEGORY, 
           documentDate: DEFAULT_DOCUMENT_DATE,
-          documentTitle: DEFAULT_DOCUMENT_TITLE,//文書タイトルを追加
-          format: DEFAULT_FILE_FORMAT,
+          // 件名の初期値
+          documentTitle: DEFAULT_DOCUMENT_TITLE || "-", 
+          // 計算した拡張子を使う
+          format: extension || "PDF",
         };
       });
 
@@ -170,7 +172,7 @@ export const useFileSearch = () => {
                 ...prevSelected,
                 documentCategory: info.category,
                 documentDate: info.date,
-                // ★追加: 取得したタイトルを反映
+                // 取得したタイトルを反映
                 documentTitle: info.title
               };
             }
