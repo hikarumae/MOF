@@ -39,33 +39,38 @@ export const FilePreview = ({ selectedFile, width }: FilePreviewProps) => {
       className="hidden lg:block bg-white p-6 border-l border-gray-200 h-full overflow-y-auto shrink-0"
       style={{ width: `${width}px` }}
     >
-   <h2 className="font-bold text-lg mb-6">プレビュー</h2>
+   <h2 className="font-bold text-lg mb-3">プレビュー</h2>
       
       {selectedFile ? (
-        <div className="space-y-6 animate-in fade-in duration-300">
+        <div className="space-y-3 animate-in fade-in duration-300">
           <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 mb-4">
             <p className="text-xs text-slate-500 font-bold">ファイル名：</p>
             <p className="font-bold text-blue-900 text-sm break-words">{selectedFile.name}</p>
           </div>
 
-          <div className="space-y-1">
-            <p className="text-xs text-slate-500 font-bold">件名</p>
-            <p className="text-sm">{selectedFile.documentTitle || "-"}</p>
+          <div className="space-y6">
+            <p className="text-xs text-slate-500 font-bold">件名：
+              <span className="text-sm">{selectedFile.documentTitle || "-"}
+              </span>  
+              </p>
           </div>
 
-          <div className="space-y-1">
-            <p className="text-xs text-slate-500 font-bold">文書カテゴリ</p>
-            <p className="text-sm">{selectedFile.documentCategory}</p>
+          <div className="space-y-6">
+            <p className="text-xs text-slate-500 font-bold">文書カテゴリ：
+            <span className="text-sm">{selectedFile.documentCategory}</span>
+            </p>
           </div>
 
-          <div className="space-y-1">
-            <p className="text-xs text-slate-500 font-bold">文書日付：</p>
-            <p className="text-sm">{selectedFile.documentDate}</p>
+          <div className="space-y-6">
+            <p className="text-xs text-slate-500 font-bold">文書日付：
+            <span className="text-sm">{selectedFile.documentDate}</span>
+            </p>
           </div>
 
-          <div className="space-y-1">
-            <p className="text-xs text-slate-500 font-bold">ファイル形式</p>
-            <p className="text-sm uppercase">{selectedFile.format}</p>
+          <div className="space-y-6">
+            <p className="text-xs text-slate-500 font-bold">ファイル形式：
+            <span className="text-sm uppercase">{selectedFile.format}</span>
+            </p>
           </div>
 
           {/* プレビュー表示エリア */}
