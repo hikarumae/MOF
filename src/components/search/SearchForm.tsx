@@ -22,7 +22,7 @@ export const SearchForm = ({ value, onChange, onSubmit, variant = 'small' }: Sea
               type="text" 
               value={value}
               onChange={(e) => onChange(e.target.value)}
-              placeholder="ここに質問を入力（例：出張の日当は？）" 
+              placeholder="ここに質問を入力（例：出張の日当は？結婚の祝い金は？）" 
               className="flex-1 text-lg outline-none bg-transparent placeholder:text-slate-400"
             />
             <Sparkles className="w-6 h-6 text-blue-500 ml-4" />

@@ -21,7 +21,7 @@ export const Header = ({ onLogoClick }: HeaderProps) => {
         <span className="text-xl font-bold tracking-tight text-slate-800">
           リブたす
         </span>
-        <span className="text-x3 tracking-tight text-slate-800">
+        <span className="text-x5 tracking-tight text-slate-800">
         司書(Librarian)が忙しいあなたを助けます
         </span>
       </div>

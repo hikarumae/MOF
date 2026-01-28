@@ -107,14 +107,15 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
         <Header onLogoClick={() => setIsSearched(false)} />
-        <main className="max-w-5xl mx-auto px-6 py-20 flex flex-col items-center gap-16">
+        <main className="max-w-5xl mx-auto px-6 py-10 flex flex-col items-center gap-16">
           <section className="w-full max-w-3xl">
+
             <div 
               onClick={handleSaveClick}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`cursor-pointer border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center gap-6 text-center h-56 transition-all ${isDragging ? "border-blue-700 bg-blue-100" : "border-blue-500 bg-blue-50/20 hover:bg-blue-50/40"}`}
+              className={`cursor-pointer border-2 border-dashed rounded-xl p-20 flex flex-col items-center justify-center gap-6 text-center h-56 transition-all ${isDragging ? "border-blue-700 bg-blue-100" : "border-blue-500 bg-blue-50/20 hover:bg-blue-50/40"}`}
             >
               <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
               <p className="font-bold text-slate-700">{isDragging ? "ここにドロップしてアップロード" : "ファイル保存"}</p>
@@ -142,7 +143,7 @@ export default function Home() {
         <main className="flex-1 overflow-y-auto bg-white border-r border-gray-200">
           <div className="p-8 max-w-4xl mx-auto space-y-8">
             
-            <div className="space-y-6">
+            <div className="space-y-10">
               <div>
                 <section className="w-full max-w-3xl">
                   <div 
