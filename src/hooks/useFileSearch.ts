@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { SearchResult } from '../types/file';
-import { BACKEND_API_URL, SYSTEM_AUTHOR_NAME, DEFAULT_FILE_FORMAT, LAST_UPDATED_PLACEHOLDER } from '../constants/config';
+import { BACKEND_API_URL, DEFAULT_FILE_FORMAT, DEFAULT_DOCUMENT_CATEGORY, DEFAULT_DOCUMENT_DATE, DEFAULT_DOCUMENT_TITLE } from '../constants/config';
 
 const TIMEOUT_MS = 30_000;
 
@@ -47,13 +47,18 @@ export const useFileSearch = () => {
       const data = await res.json();
       const sources = Array.isArray(data.sources) ? data.sources : [];
 
-      const formattedResults: SearchResult[] = sources.map((s: any) => {
+      const formattedResults: SearchResult[] = sources.map((s: any, index: number) => {
         const fileName = s.file_name ?? "資料名";
         const chunkId = Number.isFinite(s.chunk_id) ? s.chunk_id : 0;
         const category = s.category ?? "unknown";
+        // ★追加：ファイル名のお尻（拡張子）を見て、自動で形式を決めるロジック
+        // 例: "report.pdf" -> "pdf" -> "PDF"
+        const extension = fileName.includes('.') 
+          ? fileName.split('.').pop()?.toUpperCase() 
+          : DEFAULT_FILE_FORMAT;
 
         return {
-          id: `${fileName}#${chunkId}`,
+          id: `${fileName}#${chunkId}_${index}`,
           name: fileName,
           summary: s.text ?? "",
           category,
@@ -61,18 +66,128 @@ export const useFileSearch = () => {
           page: (typeof s.page === "number" ? s.page : null),
           chunkId,
           tags: [category],
-          author: SYSTEM_AUTHOR_NAME,
-          lastUpdated: LAST_UPDATED_PLACEHOLDER,
-          format: DEFAULT_FILE_FORMAT,
+          documentCategory: DEFAULT_DOCUMENT_CATEGORY, 
+          documentDate: DEFAULT_DOCUMENT_DATE,
+          // 件名の初期値
+          documentTitle: DEFAULT_DOCUMENT_TITLE || "-", 
+          // 計算した拡張子を使う
+          format: extension || "PDF",
         };
       });
 
       setSearchResults(formattedResults);
+
       setSelectedFile(formattedResults.length > 0 ? formattedResults[0] : null);
 
       const answer =
         typeof data.answer === "string" && data.answer.trim() ? data.answer : null;
       setAiAnswer(answer);
+
+
+// ---------------------------------------------------------
+      // ★追加(たも)：ここから Azure Table Storage への問い合わせ処理
+      // ---------------------------------------------------------
+      
+      // 検索結果からファイル名のリストを作成（URIから抽出）
+      const fileNames = formattedResults.map(r => {
+        try {
+          // ★まず「?」で区切って、クエリパラメータ（sig=...）を捨てる
+          const uriWithoutQuery = r.uri.split('?')[0];
+
+          // ★その後、「/」で区切って最後のファイル名部分を取る
+          const parts = uriWithoutQuery.split('/');
+          const extractedName = parts[parts.length - 1];
+
+          // ★日本語デコードして返す（空なら元のnameを使う）
+          return decodeURIComponent(extractedName || r.name);
+        } catch (e) {
+          // エラー時は元の名前を返す
+          return r.name;
+        }
+      });
+
+      // デバッグ用にブラウザのコンソールにも出す（確認用）
+      console.log("【Frontend Debug】抽出したファイル名リスト:", fileNames);
+
+      // 重複を除去
+      const uniqueFileNames = Array.from(new Set(fileNames));
+
+      if (uniqueFileNames.length > 0) {
+        // 前の手順で作った API を呼び出す
+        // ※ app/api/file-metadata/route.ts が作成されている必要があります
+        const metaRes = await fetch('/api/file-metadata', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileNames: uniqueFileNames }),
+        });
+
+        if (metaRes.ok) {
+          const metaMap = await metaRes.json(); // { "filename": { category: "...", date: "..." }, ... }
+
+          // ★重要：ここでも「?」以降を削除してから照合する！
+          setSearchResults(prevResults => {
+            return prevResults.map(item => {
+              // URLからきれいなファイル名を抽出
+              const uriWithoutQuery = item.uri.split('?')[0];
+              const fName = decodeURIComponent(uriWithoutQuery.split('/').pop() || item.name);
+              
+              // マップと照合
+              const info = metaMap[fName];
+              
+              if (info) {
+                return {
+                  ...item,
+                  documentCategory: info.category,
+                  documentDate: info.date,
+                  // ★追加: 取得したタイトルを反映
+                  documentTitle: info.title
+                };
+              }
+              return item;
+            });
+          });
+
+          // 取得したメタデータを使って searchResults を更新
+          setSearchResults(prevResults => {
+            const newResults = prevResults.map(item => {
+              const fName = decodeURIComponent(item.uri.split('/').pop() || item.name);
+              const info = metaMap[fName];
+              
+              if (info) {
+                return {
+                  ...item,
+                  documentCategory: info.category, // テーブルから取得した値
+                  documentDate: info.date          // テーブルから取得した値
+                };
+              }
+              return item;
+            });
+            return newResults;
+          });
+
+          // ★重要：選択中のファイル（プレビュー）も同様に更新
+          setSelectedFile(prevSelected => {
+            if (!prevSelected) return null;
+            const uriWithoutQuery = prevSelected.uri.split('?')[0];
+            const fName = decodeURIComponent(uriWithoutQuery.split('/').pop() || prevSelected.name);
+            const info = metaMap[fName];
+            
+            if (info) {
+              return {
+                ...prevSelected,
+                documentCategory: info.category,
+                documentDate: info.date,
+                // 取得したタイトルを反映
+                documentTitle: info.title
+              };
+            }
+            return prevSelected;
+          });
+        }
+      }
+      // ---------------------------------------------------------
+      // ★追加終了（たも）
+      // ---------------------------------------------------------
 
     } catch (err: any) {
       console.error("検索エラー:", err);

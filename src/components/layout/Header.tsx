@@ -18,9 +18,11 @@ export const Header = ({ onLogoClick }: HeaderProps) => {
         <div className="bg-blue-600 p-1.5 rounded-lg">
           <Sparkles className="w-5 h-5 text-white" />
         </div>
-        <span className="text-xl font-bold tracking-tight text-slate-800">リブたす</span>
+        <span className="text-xl font-bold tracking-tight text-slate-800">
+          リブたす
+        </span>
         <span className="text-x5 tracking-tight text-slate-800">
-          司書(Librarian)が忙しいあなたを助けます
+        司書(Librarian)が忙しいあなたを助けます
         </span>
       </div>
 
