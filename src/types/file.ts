@@ -24,7 +24,19 @@ export type SearchResult = {
 
   // 既存UIが参照しているので残す（固定値）
   tags: string[];
-  author: string;
-  lastUpdated: string;
+  
+  // 文書カテゴリとして使用
+  documentCategory: string;
+
+  // 文書内の日付として使用
+  documentDate: string;
+
+  // ★追加: 取引先または文書タイトル (RowKeyの値)
+  documentTitle: string;
+
+  // 拡張子から取得
   format: string;
+
 };
+  
+

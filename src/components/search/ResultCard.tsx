@@ -56,21 +56,47 @@ export const ResultCard = ({ file, isSelected, onClick, onOpen }: ResultCardProp
             {file.summary}
           </div>
           
+          {/* ★タグは非表示
           <div className="flex gap-2 flex-wrap">
             {file.tags && file.tags.map((tag) => (
               <span key={tag} className="bg-blue-500 text-white text-xs px-3 py-1 rounded-full font-medium">
                 タグ（{tag}）
               </span>
             ))}
-          </div>
+          </div>　*/}
 
-          <div className="grid grid-cols-3 gap-2 bg-gray-200 p-2 rounded text-xs text-slate-600 mt-2">
-            <div className="border-r border-gray-300 px-2 text-center">作成者: {file.author}</div>
-            <div className="border-r border-gray-300 px-2 text-center">最終更新: {file.lastUpdated}</div>
-            <div className="px-2 text-center">形式: {file.format}</div>
+        {/* ▼▼▼ ここを修正しました（3列→4列に変更し、件名を追加） ▼▼▼ */}
+          <div className="grid grid-cols-4 gap-2 bg-gray-200 p-2 rounded text-xs text-slate-600 mt-2">
+
+            {/* 既存: カテゴリ */}
+            <div className="border-r border-gray-300 px-2 text-center">
+              <span className="font-bold text-slate-500 mr-1">カテゴリ:</span>
+              {file.documentCategory}
+            </div>
+
+            {/* ★追加: 件名（取引先名など） */}
+            <div className="border-r border-gray-300 px-2 text-center overflow-hidden text-ellipsis whitespace-nowrap">
+              <span className="font-bold text-slate-500 mr-1">件名:</span>
+              <span title={file.documentTitle}>{file.documentTitle}</span>
+            </div>
+            
+            {/* 既存: 日付 */}
+            <div className="border-r border-gray-300 px-2 text-center">
+              <span className="font-bold text-slate-500 mr-1">日付:</span>
+              {file.documentDate}
+            </div>
+            
+            {/* 既存: 形式 */}
+            <div className="px-2 text-center">
+              <span className="font-bold text-slate-500 mr-1">ファイル形式:</span>
+              {file.format}
+            </div>
           </div>
+          {/* ▲▲▲ 修正ここまで ▲▲▲ */}
+        
         </div>
       </div>
     </div>
   );
 };
+
