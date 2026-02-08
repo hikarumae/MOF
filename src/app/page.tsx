@@ -131,7 +131,7 @@ export default function Home() {
 
           <section className="w-full max-w-4xl flex flex-col items-center gap-3">
             <p className="text-slate-500 text-base font-medium">ファイルを探す</p>
-            <p className="text-slate-500">※数字のつくGoogleアカウントの人のみアクセスできます。</p>
+            <p className="text-slate-500">※'mo','fu', 数字 いずれかの入ったGoogleアカウントの人のみアクセスできます。</p>
             <SearchForm 
             value={searchQuery} 
             onChange={setSearchQuery} 
