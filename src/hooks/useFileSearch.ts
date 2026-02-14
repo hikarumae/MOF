@@ -41,7 +41,7 @@ export const useFileSearch = () => {
       const res = await fetch(url, { signal: controller.signal });
       if (!res.ok)
         if (res.status === 401) setError("401 Error: 検索するにはログインしてください。${res.status}");
-          else if (res.status === 403) setError("403 Error: 数字付きアカウントでのみアクセスできます。${res.status}");
+          else if (res.status === 403) setError("403 Error: 条件を満たすアカウントでのみアクセスできます。${res.status}");
           else setError(`例外 データ取得エラー: ${res.status}`);
 
       const data = await res.json();
