@@ -66,10 +66,14 @@ export default function Home() {
 
 
   // -----------------------------------------------------------------
-  // ▼▼ ドラッグ＆ドロップ機能（以前のまま維持） ▼▼
+  // ▼▼ ドラッグ＆ドロップ機能 ▼▼
   // -----------------------------------------------------------------
   const [isDragging, setIsDragging] = useState(false);
+  // ★追加：エラーメッセージを保持する状態
+  const [fileError, setFileError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // ★追加：ファイルサイズの上限 (10MB)
+  const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
   const uploadToAzure = async (file: File) => {
     const formData = new FormData();
@@ -85,9 +89,24 @@ export default function Home() {
     }
   };
 
+  // ★追加：アップロード前にチェックする関数
+  const validateAndUpload = (file: File) => {
+    setFileError(null); // エラーをリセット
+
+    if (file.size > MAX_FILE_SIZE) {
+      setFileError("ファイルサイズが大きすぎます（10MB以下にしてください）");
+      return; // 10MBを超えていたらここで処理を終了（アップロードしない）
+    }
+
+    uploadToAzure(file);
+  };
+
   const handleSaveClick = () => fileInputRef.current?.click();
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) uploadToAzure(e.target.files[0]);
+    // ★変更：uploadToAzure の代わりに validateAndUpload を呼ぶ
+    if (e.target.files?.[0]) validateAndUpload(e.target.files[0]);
+    // 同じファイルを再度選べるようにinputをリセット
+    if (fileInputRef.current) fileInputRef.current.value = ''; 
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -98,7 +117,8 @@ export default function Home() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    if (e.dataTransfer.files[0]) uploadToAzure(e.dataTransfer.files[0]);
+    // ★変更：uploadToAzure の代わりに validateAndUpload を呼ぶ
+    if (e.dataTransfer.files[0]) validateAndUpload(e.dataTransfer.files[0]);
   };
   // -----------------------------------------------------------------
 
@@ -123,6 +143,12 @@ export default function Home() {
                 <p className="font-bold text-slate-700">
                   {isDragging ? "ここにドロップしてアップロード" : "ファイル保存"}
                 </p>
+                {/* ★追加：エラーがある場合は赤文字で表示 */}
+                {fileError && (
+                  <p className="text-red-500 font-bold mt-2" data-testid="file-error-message">
+                    {fileError}
+                  </p>
+              )}
                 <p className="text-slate-500">※保存したファイルは、管理者がindex化するまで反映されません。</p>
 
                 <button className="bg-slate-500 hover:bg-slate-600 text-white px-10 py-3 rounded-md shadow-md font-medium transition-colors w-64 pointer-events-none">ファイルを保存する</button>
@@ -183,6 +209,12 @@ export default function Home() {
                   <p className="font-bold text-slate-700">
                     {isDragging ? "ここにドロップしてアップロード" : "ファイル保存"}
                   </p>
+                  {/* ★追加：エラーがある場合は赤文字で表示 */}
+                  {fileError && (
+                    <p className="text-red-500 font-bold mt-2" data-testid="file-error-message">
+                      {fileError}
+                    </p>
+                  )}
                   <p className="text-slate-500">※保存したファイルは、管理者がindex化するまで反映されません。</p>
                   
 
